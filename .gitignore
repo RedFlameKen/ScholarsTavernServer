@@ -1,0 +1,8 @@
+__pycache__/
+*.sqlite3
+db.cnf
+
+.venv/
+venv/
+
+.ignore
