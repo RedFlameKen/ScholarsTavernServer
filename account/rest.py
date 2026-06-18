@@ -110,3 +110,5 @@ def signin(request: HttpRequest):
         return HttpResponseBadRequest(content=json.dumps(status.__dict__).encode())
 
     return HttpResponse(content=json.dumps(status.__dict__).encode())
+
+# TODO: implement user update feature

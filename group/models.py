@@ -23,7 +23,7 @@ class Tag(models.Model):
         return serializers.serialize('json', [self,])
 
 
-class GroupTags(models.Model):
+class GroupTag(models.Model):
     tag_id = models.ForeignKey(Tag, on_delete=CASCADE)
     group_id = models.ForeignKey(Group, on_delete=CASCADE)
 

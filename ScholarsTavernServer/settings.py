@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'account',
+    'group',
     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
