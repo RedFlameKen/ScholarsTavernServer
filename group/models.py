@@ -13,6 +13,13 @@ class Group(models.Model):
     def __str__(self):
         return serializers.serialize('json', [self,])
 
+    def todict(self):
+        return {
+            "id": self.pk,
+            "name": self.name,
+            "is_public": self.is_public,
+        }
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=128)

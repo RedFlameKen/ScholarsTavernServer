@@ -1,5 +1,4 @@
 from asgiref.sync import async_to_sync
-from django.http import HttpResponse
 import json
 from channels.generic.websocket import WebsocketConsumer
 
@@ -36,7 +35,3 @@ class CallConsumer(WebsocketConsumer):
 
     def signal_message(self, event):
         self.send(text_data=json.dumps(event["data"]))
-
-
-def test(_):
-    return HttpResponse(content="shit bruv".encode())

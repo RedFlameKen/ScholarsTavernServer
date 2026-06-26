@@ -53,6 +53,8 @@ def register_user(user_data: dict):
 
     # check if user already exists by checking if email is already in use
     existing_user_query = User.users.filter(email=email)
+
+    # TODO: should be returning forbidden instead
     if existing_user_query.count() > 0:
         return Checker(
             message="A user with that email already exists"
@@ -78,7 +80,7 @@ def register_user(user_data: dict):
     )
 
 
-def login_user(user_data: dict):
+def login_user(user_data: dict) -> Checker:
     email = user_data["email"]
     password = user_data["password"]
 
