@@ -2,6 +2,9 @@ __pycache__/
 *.sqlite3
 db.cnf
 
+.pg_service.conf
+.pass_file
+
 .venv/
 venv/
 

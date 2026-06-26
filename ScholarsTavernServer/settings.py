@@ -94,13 +94,23 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
+        "ENGINE": "django.db.backends.postgresql",
         "OPTIONS": {
-            "read_default_file": 'db.cnf',
+            "service": 'st_db_service',
+            "passfile": '.pass_file',
         },
     }
 }
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "OPTIONS": {
+#             "read_default_file": 'db.cnf',
+#         },
+#     }
+# }
+#
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
