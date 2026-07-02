@@ -1,10 +1,10 @@
 from http.client import FORBIDDEN, UNAUTHORIZED
 from json import JSONDecoder
 import json
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from django.views.decorators.http import require_http_methods
 
-from account.controllers import auth_login_user, login_user, logout_user, register_user
+from account.controllers import auth_login_user, get_user_details, login_user, logout_user, register_user
 from account.models import User
 from util.checker import Checker
 
@@ -118,5 +118,27 @@ def signin(request: HttpRequest):
         return HttpResponseBadRequest(content=json.dumps(status.__dict__).encode(), content_type="application/json")
 
     return HttpResponse(content=json.dumps(status.__dict__).encode(), content_type="application/json")
+
+
+@require_http_methods(["GET"])
+def user_details(_: HttpRequest, user_id=-1):
+    if user_id == -1:
+        return HttpResponseNotFound(content=json.dumps(Checker(
+            success=False,
+            status=404,
+            message="user not found",
+        ).__dict__).encode(), content_type="application/json")
+
+    status = get_user_details(user_id)
+
+    if not status.success:
+        return HttpResponseNotFound(content=json.dumps(
+            status.__dict__
+        ).encode(), content_type="application/json")
+
+    return HttpResponse(content=json.dumps(
+        status.__dict__
+    ).encode(), content_type="application/json")
+
 
 # TODO: implement user update feature

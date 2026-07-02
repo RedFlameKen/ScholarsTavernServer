@@ -204,3 +204,30 @@ def create_auth_token(user_id: User, **overwrite_token: bool) -> str | None:
     token.save()
 
     return generated_token
+
+
+def get_user_details(user_id: int):
+    found_user = User.users.filter(id=user_id)
+
+    if found_user.count() <= 0:
+        return Checker(
+            status=404,
+            success=False,
+            message="user not found"
+        )
+
+    details = {
+        "id": user_id,
+        "first_name": found_user[0].first_name,
+        "last_name": found_user[0].last_name,
+        "bio": found_user[0].bio,
+        "email": found_user[0].email,
+        # "date_created": found_user[0].date_created,
+    }
+
+    return Checker(
+        status=200,
+        success=True,
+        message="user found",
+        data=details
+    )
