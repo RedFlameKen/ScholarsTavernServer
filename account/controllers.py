@@ -174,7 +174,8 @@ def auth_login_user(auth_token: str, user_id: int):
         success=True,
         message="successfully logged in!",
         data={
-            "success": True
+            "success": True,
+            "user_id": user_id
         }
     )
 
