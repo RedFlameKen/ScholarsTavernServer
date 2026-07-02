@@ -232,3 +232,31 @@ def get_user_details(user_id: int):
         message="user found",
         data=details
     )
+
+
+# assumes that a user with user_id exists
+def update_user_details(data: dict, user_id: int):
+    user = User.users.get(id=user_id)
+    if "bio" in data:
+        user.bio = data["bio"]
+    if "first_name" in data:
+        user.first_name = data["first_name"]
+    if "last_name" in data:
+        user.last_name = data["last_name"]
+    if "email" in data:
+        user.email = data["email"]
+
+    user.save()
+
+    details = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "bio": user.bio,
+        "email": user.email,
+        # "date_created": user.date_created,
+    }
+    return Checker(
+        success=True,
+        message="user updated",
+        data=details
+    )

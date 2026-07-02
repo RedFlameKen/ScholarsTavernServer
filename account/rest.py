@@ -4,7 +4,7 @@ import json
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from django.views.decorators.http import require_http_methods
 
-from account.controllers import auth_login_user, get_user_details, login_user, logout_user, register_user
+from account.controllers import auth_login_user, get_user_details, login_user, logout_user, register_user, update_user_details, validate_auth_token
 from account.models import User
 from util.checker import Checker
 
@@ -141,4 +141,32 @@ def user_details(_: HttpRequest, user_id=-1):
     ).encode(), content_type="application/json")
 
 
-# TODO: implement user update feature
+def update_user(request: HttpRequest):
+    auth_token = request.COOKIES["auth_token"]
+    user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    if request.content_type != "application/json":
+        print(f"Invalid content type {request.content_type}")
+        return HttpResponseBadRequest()
+
+    content_json = JSONDecoder().decode(request.body.decode())
+    if type(content_json) is not dict:
+        print(f"Invalid json format: {type(content_json)}")
+        return HttpResponseBadRequest()
+
+    if "data" not in content_json:
+        print("standard json structure malformed")
+        return HttpResponseBadRequest()
+
+    data = content_json["data"]
+
+    status = update_user_details(data, user_id)
+
+    return HttpResponse(content=json.dumps(
+        status.__dict__
+    ).encode(), content_type="application/json")
