@@ -92,7 +92,7 @@ def auth_login(request: HttpRequest):
         print("auth login failed")
         return HttpResponse(status=UNAUTHORIZED, content=status.__str__().encode(), content_type="application/json")
 
-    return HttpResponse(content=b"successfully logged in")
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
 
 
 @require_http_methods(["POST"])
