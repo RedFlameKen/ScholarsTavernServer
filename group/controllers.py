@@ -151,6 +151,7 @@ def create_join_request(user_id: int, request_data: dict):
     return Checker(
         success=True,
         message="successfully sent request to join",
+        data={id: group.pk}
     )
 
 
