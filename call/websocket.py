@@ -29,9 +29,12 @@ class CallConsumer(WebsocketConsumer):
                 self.room_group_name,
                 {
                     "type": "signal_message",
+                    "sender": self.channel_name,
                     "data": data
                 }
             )
 
     def signal_message(self, event):
+        if event["sender"] == self.channel_name:
+            return
         self.send(text_data=json.dumps(event["data"]))
