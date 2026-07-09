@@ -70,8 +70,12 @@ def login(request: HttpRequest):
 
 @require_http_methods(["GET", "POST"])
 def logout(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     status = logout_user(auth_token, user_id)
 
@@ -83,8 +87,12 @@ def logout(request: HttpRequest):
 
 @require_http_methods(["GET", "POST"])
 def auth_login(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     status = auth_login_user(auth_token, user_id)
 
@@ -142,8 +150,12 @@ def user_details(_: HttpRequest, user_id=-1):
 
 
 def update_user(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     validation_status = validate_auth_token(auth_token, user_id)
 

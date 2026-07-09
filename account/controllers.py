@@ -116,12 +116,17 @@ def login_user(user_data: dict) -> Checker:
     )
 
 
-def validate_auth_token(auth_token: str, user_id: int):
+def validate_auth_token(auth_token: str | None, user_id: int):
     existing_token = AuthToken.tokens.filter(user_id=user_id)
 
     if existing_token.count() <= 0:
         return Checker(
             message="token does not exist"
+        )
+
+    if auth_token is None or user_id == -1:
+        return Checker(
+            message="Authentication failed"
         )
 
     token_rehashed = hash_with_salt(auth_token, existing_token[0].salt)
@@ -137,7 +142,7 @@ def validate_auth_token(auth_token: str, user_id: int):
     )
 
 
-def logout_user(auth_token: str, user_id: int):
+def logout_user(auth_token: str | None, user_id: int):
     validation = validate_auth_token(auth_token, user_id)
 
     if not validation.success:
@@ -155,7 +160,7 @@ def logout_user(auth_token: str, user_id: int):
     )
 
 
-def auth_login_user(auth_token: str, user_id: int):
+def auth_login_user(auth_token: str | None, user_id: int):
     validation = validate_auth_token(auth_token, user_id)
 
     if not validation.success:

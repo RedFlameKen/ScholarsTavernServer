@@ -1,3 +1,4 @@
+from http.client import UNAUTHORIZED
 from json import JSONDecoder
 import json
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
@@ -11,8 +12,12 @@ from util.checker import Checker
 
 @require_http_methods(["POST"])
 def create_group_endpoint(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     validation_status = validate_auth_token(auth_token, user_id)
 
@@ -51,8 +56,12 @@ def create_group_endpoint(request: HttpRequest):
 
 @require_http_methods(["GET"])
 def get_user_groups_endpoint(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     validation_status = validate_auth_token(auth_token, user_id)
 
@@ -87,8 +96,12 @@ def search_groups_endpoint(request: HttpRequest):
 
 @require_http_methods(["POST"])
 def request_group_join_endpoint(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     validation_status = validate_auth_token(auth_token, user_id)
 
@@ -123,8 +136,12 @@ def request_group_join_endpoint(request: HttpRequest):
 
 @require_http_methods(["GET"])
 def get_user_join_requests_endpoint(request: HttpRequest):
-    auth_token = request.COOKIES["auth_token"]
-    user_id = request.COOKIES["user_id"]
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
     validation_status = validate_auth_token(auth_token, user_id)
 
