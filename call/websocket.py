@@ -16,6 +16,10 @@ class CallConsumer(WebsocketConsumer):
             if header[0] == b"cookie":
                 cookie.load(header[1].decode())
 
+        if "user_id" not in cookie:
+            self.close()
+            return
+
         self.user_id = cookie["user_id"].value
         self.room_group_name = "call_room"
 
