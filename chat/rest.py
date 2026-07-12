@@ -1,46 +1,48 @@
 from asgiref.sync import async_to_sync
 import json
 from channels.generic.websocket import WebsocketConsumer
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, HttpResponseNotFound
+from django.views.decorators.http import require_http_methods
+from account.controllers import validate_auth_token
+from chat.controller import get_group_chat_channels
+from group.models import Group
+from util.checker import Checker
 
 
-class ChatConsumer(WebsocketConsumer):
-    def connect(self) -> None:
-        self.room_group_name = "chat_room"
+@require_http_methods(["GET"])
+def get_group_channels(request: HttpRequest, group_id=-1):
+    if group_id == -1:
+        return HttpResponseNotFound(content=json.dumps(Checker(
+            success=False,
+            status=404,
+            message="group not found",
+        ).__dict__).encode(), content_type="application/json")
 
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
-            self.channel_name
-        )
+    found_group = Group.groups.filter(id=group_id)
 
-        self.accept()
+    if found_group.count() <= 0:
+        return HttpResponseNotFound(content=json.dumps(Checker(
+            success=False,
+            status=404,
+            message="group not found",
+        ).__dict__).encode(), content_type="application/json")
 
-    def disconnect(self, code: int) -> None:
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_group_name,
-            self.channel_name
-        )
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
 
-    def receive(self, text_data: str | None = None, bytes_data: bytes | None = None) -> None:
-        message = ""
+    validation_status = validate_auth_token(auth_token, user_id)
 
-        if text_data is not None:
-            json_message = json.loads(text_data)
-            message = json_message['message']
-            print(f"client said: {message}")
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
 
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    "type": "chat_message",
-                    "message": json_message["message"]
-                }
-            )
+    status = get_group_chat_channels(group_id=group_id)
 
-        self.send(text_data=json.dumps({
-            'message': message
-        }))
-
-    def chat_message(self, event):
-        self.send(text_data=json.dumps({
-            "message": event["message"]
-        }))
+    return HttpResponse(
+        status=status.status,
+        content=status.__str__().encode(),
+        content_type="application/json"
+    )

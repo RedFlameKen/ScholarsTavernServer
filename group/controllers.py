@@ -1,6 +1,7 @@
 from account.models import User
 from group.models import Group, GroupMember, GroupTag, JoinRequest, Tag
 from util.checker import Checker
+from chat.controller import create_chat_channel, create_voice_channel, create_chat_channel_group, generate_initial_chat_channels
 
 from thefuzz import fuzz
 
@@ -17,14 +18,16 @@ def group_fuzzy_search(search: str, groups: list[Group]):
         if ratio < 20:
             continue
 
-        group_dict = group.__dict__
-        group_dict["tags"] = []  # tags array within the group dictionary
+        group_dict = dict(group.__dict__)
+        tags = []  # tags array within the group dictionary
         group_tags = GroupTag.group_tags.filter(group_id=group)  # get all group tags of the group
 
         # iterate through group_tags and add all tag names to dictionary's tag field
         for group_tag in group_tags:
             tag = Tag.tags.get(id=group_tag.tag_id.pk)
-            group_dict["tags"].append(tag.name)
+            tags.append(tag.name)
+
+        group_dict["tags"] = tags
 
         results.append(
             {
@@ -102,10 +105,12 @@ def create_group(group_data: dict, user_id: int):
         if created_tag:
             create_group_tag(group, created_tag)
 
-    return Checker(
-        success=True,
-        message="Successfully created the group!"
-    )
+    print("starting generation")
+
+    generation_status = generate_initial_chat_channels(group_id=group)
+
+    print("generated")
+    return generation_status
 
 
 def get_user_groups(user_id: int):

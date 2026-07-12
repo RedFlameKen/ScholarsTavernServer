@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'account',
     'group',
+    'chat',
     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',

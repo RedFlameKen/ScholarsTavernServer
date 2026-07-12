@@ -2,7 +2,7 @@ import json
 
 
 class Checker():
-    def __init__(self, success=False, status=0, message="", data={}):
+    def __init__(self, success=False, status=200, message="", data={}):
         self.success = success
         self.status = status
         self.message = message
