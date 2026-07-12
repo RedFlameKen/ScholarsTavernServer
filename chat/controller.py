@@ -110,27 +110,37 @@ def get_group_chat_channels(group_id: int):
             message="group not found"
         )
 
-    result = {}
+    result = []
     channel_groups = ChatChannelGroup.chat_channel_groups.filter(group_id=group_id)
     for group in channel_groups:
-        channels = {}
+        channels = []
         chat_channels = ChatChannel.chat_channels.filter(channel_group_id=group)
         for chat_channel in chat_channels:
-            channels[int(chat_channel.pk)] = {
+            channels.append({
+                "id": int(chat_channel.pk),
                 "name": chat_channel.name,
                 "type": "chat",
-            }
+            })
         voice_channels = VoiceChannel.voice_channels.filter(channel_group_id=group)
         for voice_channel in voice_channels:
-            channels[int(voice_channel.pk)] = {
+            channels.append({
+                "id": int(voice_channel.pk),
                 "name": voice_channel.name,
                 "type": "voice",
-            }
-        result[int(group.pk)] = channels
+            })
+        group_dict = {
+            "id": int(group.pk),
+            "name": group.name,
+            "channels": channels
+        }
+        result.append(group_dict)
 
     return Checker(
         status=200,
         success=True,
         message="fetched channels",
-        data=result
+        data={
+            "group_name": found_group[0].name,
+            "channel_groups": result
+        }
     )
