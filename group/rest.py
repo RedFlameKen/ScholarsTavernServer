@@ -1,12 +1,13 @@
-from http.client import UNAUTHORIZED
 from json import JSONDecoder
 import json
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from django.http.response import HttpResponseServerError
 from django.views.decorators.http import require_http_methods
 
+from chat.controller import get_group_chat_channels
 from group.controllers import create_group, create_join_request, get_user_groups, get_user_join_requests, search_groups
 from account.controllers import validate_auth_token
+from group.models import Group
 from util.checker import Checker
 
 
@@ -154,5 +155,43 @@ def get_user_join_requests_endpoint(request: HttpRequest):
         return HttpResponseServerError()
 
     return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+@require_http_methods(["GET"])
+def get_group_channels(request: HttpRequest, group_id=-1):
+    if group_id == -1:
+        return HttpResponseNotFound(content=json.dumps(Checker(
+            success=False,
+            status=404,
+            message="group not found",
+        ).__dict__).encode(), content_type="application/json")
+
+    found_group = Group.groups.filter(id=group_id)
+
+    if found_group.count() <= 0:
+        return HttpResponseNotFound(content=json.dumps(Checker(
+            success=False,
+            status=404,
+            message="group not found",
+        ).__dict__).encode(), content_type="application/json")
+
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    status = get_group_chat_channels(group_id=group_id)
+
+    return HttpResponse(
+        status=status.status,
+        content=status.__str__().encode(),
+        content_type="application/json"
+    )
 
 # TODO: update group
