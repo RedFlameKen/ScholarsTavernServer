@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.base import CASCADE
 from django.db.models.manager import Manager
 
+from account.models import User
 from group.models import Group
 
 
@@ -38,7 +39,9 @@ class VoiceChannel(models.Model):
 
 class Chat(models.Model):
     type = models.CharField(max_length=24)
-    chat_id = models.ForeignKey(ChatChannel, on_delete=CASCADE)
+    chat_channel = models.ForeignKey(ChatChannel, on_delete=CASCADE)
+    sender = models.ForeignKey(User, on_delete=CASCADE)
+    time_sent = models.DateTimeField(auto_now=True)
 
     chats = Manager()
 
@@ -46,7 +49,7 @@ class Chat(models.Model):
         return serializers.serialize('json', [self,])
 
 
-class TextChats(models.Model):
+class TextChat(models.Model):
     text = models.CharField(max_length=100)
     chat_id = models.ForeignKey(Chat, on_delete=CASCADE)
 
@@ -56,12 +59,12 @@ class TextChats(models.Model):
         return serializers.serialize('json', [self,])
 
 
-class FileChats(models.Model):
-    text = models.BinaryField()
+class FileChat(models.Model):
+    data = models.BinaryField()
     content_type = models.CharField(max_length=100)
     chat_id = models.ForeignKey(Chat, on_delete=CASCADE)
 
-    text_chats = Manager()
+    file_chats = Manager()
 
     def __str__(self):
         return serializers.serialize('json', [self,])

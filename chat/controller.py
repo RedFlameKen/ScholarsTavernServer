@@ -1,7 +1,10 @@
-from group.models import Group
+from datetime import datetime
+
+from account.models import User
+from group.models import Group, GroupMember
 from util.result import Result
 from util.checker import Checker
-from chat.models import ChatChannelGroup, ChatChannel, VoiceChannel
+from chat.models import Chat, ChatChannelGroup, ChatChannel, FileChat, TextChat, VoiceChannel
 
 
 def create_chat_channel_group(group_id: Group, name: str):
@@ -142,5 +145,123 @@ def get_group_chat_channels(group_id: int):
         data={
             "group_name": found_group[0].name,
             "channel_groups": result
+        }
+    )
+
+
+def verify_chat_channel_user(user_id: int, chat_channel_id: int):
+    found_channel = ChatChannel.chat_channels.filter(id=chat_channel_id)
+    if found_channel.count() <= 0:
+        return Checker(
+            status=404,
+            message="chat channel not found"
+        )
+
+    found_channel_group = ChatChannelGroup.chat_channel_groups.filter(id=found_channel[0].channel_group_id.pk)
+    if found_channel_group.count() <= 0:
+        return Checker(
+            status=404,
+            message="channel group not found"
+        )
+
+    found_group = Group.groups.filter(id=found_channel_group[0].group_id.pk)
+    if found_group.count() <= 0:
+        return Checker(
+            status=404,
+            message="group not found"
+        )
+
+    group_id = found_group[0].pk
+    found_group_member = GroupMember.group_members.filter(user_id=user_id, group_id=group_id)
+
+    if found_group_member.count() <= 0:
+        return Checker(
+            status=403,
+            message=f"user {user_id} is not a member group {group_id}"
+        )
+
+    return Checker(
+        success=True,
+        message="user is a member of the chat channel",
+        data={
+            "channel": found_channel[0]
+        }
+    )
+
+
+def get_channel_chats(chat_channel_id: int):
+    found_chats = Chat.chats.filter(chat_channel=chat_channel_id)
+
+    chats = []
+    for chat in found_chats:
+        if chat.type == "text":
+            text_chat = TextChat.text_chats.filter(chat_id=chat.pk)
+            if text_chat.count() <= 0:
+                continue
+            chats.append({
+                "id": chat.pk,
+                "text": text_chat[0].text,
+                "sender": chat.sender.first_name + chat.sender.last_name,
+                "sender_id": chat.sender.pk,
+                "time": chat.time_sent.isoformat(),
+                "type": "text"
+            })
+        elif chat.type == "file":
+            file_chat = FileChat.file_chats.filter(chat_id=chat.pk)
+            if file_chat.count() <= 0:
+                continue
+            chats.append({
+                "id": chat.pk,
+                "data": file_chat[0].data,
+                "time": chat.time_sent.isoformat(),
+                "sender": chat.sender.first_name + chat.sender.last_name,
+                "sender_id": chat.sender.pk,
+                "content-type": file_chat[0].content_type,
+                "type": "file"
+            })
+    return Checker(
+        success=True,
+        message="messages fetched!",
+        data={
+            "chats": chats
+        }
+    )
+
+
+def create_text_chat(text: str, sender_id: int, time_sent: datetime, chat_channel_id: int):
+    verification_status = verify_chat_channel_user(user_id=sender_id, chat_channel_id=chat_channel_id)
+
+    if not verification_status.success:
+        return verification_status
+
+    user = User.users.get(id=sender_id)
+
+    channel = verification_status.data["channel"]
+
+    chat = Chat(
+        chat_channel=channel,
+        sender=user,
+        type="text",
+        time_sent=time_sent
+    )
+    chat.save()
+
+    text_chat = TextChat(
+        chat_id=chat,
+        text=text
+    )
+
+    text_chat.save()
+
+    return Checker(
+        success=True,
+        message="chat created",
+        data={
+            "id": chat.pk,
+            "text": text,
+            "sender": user.last_name + user.first_name,
+            "sender_id": sender_id,
+            "time": time_sent.isoformat(),
+            "type": "text"
         }
     )

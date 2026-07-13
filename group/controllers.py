@@ -1,7 +1,7 @@
 from account.models import User
 from group.models import Group, GroupMember, GroupTag, JoinRequest, Tag
 from util.checker import Checker
-from chat.controller import create_chat_channel, create_voice_channel, create_chat_channel_group, generate_initial_chat_channels
+from chat.controller import generate_initial_chat_channels
 
 from thefuzz import fuzz
 
@@ -78,6 +78,7 @@ def create_group_tag(group_id: Group, tag_id: Tag):
     return group_tag
 
 
+# TODO: upon group creation, group id should be returned
 def create_group(group_data: dict, user_id: int):
     name: str = group_data["name"]
     is_public: bool = group_data["is_public"]
@@ -193,4 +194,19 @@ def get_user_join_requests(user_id: int):
         data={
             "requests": request_details
         }
+    )
+
+
+def verify_group_member(user_id: int, group_id: int):
+    found = GroupMember.group_members.filter(user_id=user_id, group_id=group_id)
+
+    if found.count() <= 0:
+        return Checker(
+            status=403,
+            message=f"user {user_id} is not a member group {group_id}"
+        )
+
+    return Checker(
+        success=True,
+        message="user is a member of the group"
     )
