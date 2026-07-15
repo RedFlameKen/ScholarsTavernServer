@@ -18,7 +18,6 @@ def group_fuzzy_search(search: str, groups: list[Group]):
         if ratio < 20:
             continue
 
-        group_dict = dict(group.__dict__)
         tags = []  # tags array within the group dictionary
         group_tags = GroupTag.group_tags.filter(group_id=group)  # get all group tags of the group
 
@@ -27,7 +26,12 @@ def group_fuzzy_search(search: str, groups: list[Group]):
             tag = Tag.tags.get(id=group_tag.tag_id.pk)
             tags.append(tag.name)
 
-        group_dict["tags"] = tags
+        group_dict = {
+            "id": group.pk,
+            "is_public": group.is_public,
+            "name": group.name,
+            "tags": tags
+        }
 
         results.append(
             {
