@@ -259,7 +259,7 @@ def create_text_chat(text: str, sender_id: int, time_sent: datetime, chat_channe
         data={
             "id": chat.pk,
             "text": text,
-            "sender": user.last_name + user.first_name,
+            "sender": f"{user.first_name} {user.last_name}",
             "sender_id": sender_id,
             "time": time_sent.isoformat(),
             "type": "text"
