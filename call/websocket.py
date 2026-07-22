@@ -23,7 +23,11 @@ class CallConsumer(WebsocketConsumer):
             return
 
         self.user_id = cookie["user_id"].value
-        self.room_group_name = "call_room"
+
+        self.group_id = self.scope.get("url_route", {})["kwargs"]["group_id"]
+        self.call_channel_id = self.scope.get("url_route", {})["kwargs"]["call_channel_id"]
+
+        self.room_group_name = f"cr_{self.group_id}_{self.call_channel_id}"
 
         room = rooms.setdefault(self.room_group_name, {})
         room[int(self.user_id)] = self.channel_name
