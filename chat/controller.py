@@ -201,7 +201,7 @@ def get_channel_chats(chat_channel_id: int):
             chats.append({
                 "id": chat.pk,
                 "text": text_chat[0].text,
-                "sender": chat.sender.first_name + chat.sender.last_name,
+                "sender": f"{chat.sender.first_name} {chat.sender.last_name}",
                 "sender_id": chat.sender.pk,
                 "time": chat.time_sent.isoformat(),
                 "type": "text"
@@ -214,7 +214,7 @@ def get_channel_chats(chat_channel_id: int):
                 "id": chat.pk,
                 "data": file_chat[0].data,
                 "time": chat.time_sent.isoformat(),
-                "sender": chat.sender.first_name + chat.sender.last_name,
+                "sender": f"{chat.sender.first_name} {chat.sender.last_name}",
                 "sender_id": chat.sender.pk,
                 "content-type": file_chat[0].content_type,
                 "type": "file"
