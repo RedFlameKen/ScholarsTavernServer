@@ -18,6 +18,7 @@ class ChatConsumer(WebsocketConsumer):
                 cookie.load(header[1].decode())
 
         if "user_id" not in cookie:
+            print("user_id not in cookie")
             self.close()
             return
 
@@ -30,6 +31,7 @@ class ChatConsumer(WebsocketConsumer):
             chat_channel_id=int(self.chat_channel_id))
 
         if not verification_status.success:
+            print("failed to verify user")
             self.close()
             return
 
@@ -52,6 +54,8 @@ class ChatConsumer(WebsocketConsumer):
         }))
 
     def disconnect(self, code: int) -> None:
+        if not hasattr(self, 'room_group_name'):
+            return
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name

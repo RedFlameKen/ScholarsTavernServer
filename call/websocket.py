@@ -4,6 +4,8 @@ from channels.generic.websocket import WebsocketConsumer
 
 from http.cookies import SimpleCookie
 
+from account.models import User
+
 rooms = {}
 
 
@@ -36,9 +38,23 @@ class CallConsumer(WebsocketConsumer):
 
         self.accept()
 
+        users = []
+
+        for id in existing_users:
+            found = User.users.filter(id=id)
+            if found.count() <= 0:
+                continue
+            users.append({
+                "id": id,
+                "first_name": found[0].first_name,
+                "last_name": found[0].last_name
+            })
+
+        print(users)
+
         self.send(text_data=json.dumps({
             "type": "existing_users",
-            "users": existing_users
+            "users": users
         }))
 
     def disconnect(self, code: int) -> None:
@@ -69,8 +85,9 @@ class CallConsumer(WebsocketConsumer):
             print(f"received: {data}")
             print(f"rooms: {rooms}")
             room = rooms[self.room_group_name]
+            to = data["to"]
 
-            target = room[data["to"]]
+            target = room[to]
 
             async_to_sync(self.channel_layer.send)(
                 target,
@@ -95,5 +112,13 @@ class CallConsumer(WebsocketConsumer):
         print(f"signaling message: {event}")
 
         event["data"]["from"] = event["user_id"]
+
+        user = User.users.get(id=int(event["user_id"]))
+
+        event["data"]["user"] = {
+            "id": event["user_id"],
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+        }
 
         self.send(text_data=json.dumps(event["data"]))

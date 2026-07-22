@@ -175,12 +175,16 @@ def auth_login_user(auth_token: str | None, user_id: int):
             message="token has expired"
         )
 
+    user = User.users.get(id=user_id)
+
     return Checker(
         success=True,
         message="successfully logged in!",
         data={
             "success": True,
-            "user_id": user_id
+            "user_id": user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
         }
     )
 
