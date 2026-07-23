@@ -35,6 +35,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8080",
     "https://scholarstavern.netlify.app",
+    "https://redflameken.github.io",
 ]
 
 # Application definition
