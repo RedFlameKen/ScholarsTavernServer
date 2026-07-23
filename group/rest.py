@@ -5,7 +5,7 @@ from django.http.response import HttpResponseServerError
 from django.views.decorators.http import require_http_methods
 
 from chat.controller import get_group_chat_channels
-from group.controllers import create_group, create_join_request, get_user_groups, get_user_join_requests, search_groups
+from group.controllers import approve_join_request, cancel_join_request, create_group, create_join_request, get_user_groups, get_user_join_requests, mod_get_group_join_requests, reject_join_request, search_groups
 from account.controllers import validate_auth_token
 from group.models import Group
 from util.checker import Checker
@@ -80,11 +80,22 @@ def get_user_groups_endpoint(request: HttpRequest):
 # return a json that contains a list of group details
 @require_http_methods(["GET"])
 def search_groups_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
     search_query = request.GET.get("query", "").__str__()
     if not search_query:
         return HttpResponseBadRequest()
 
-    status = search_groups(search_query)
+    status = search_groups(search_query, user_id)
 
     return HttpResponse(
         content=json.dumps(status, default=lambda r: {
@@ -135,6 +146,137 @@ def request_group_join_endpoint(request: HttpRequest):
     return HttpResponse(content=status.__str__().encode(), content_type="application/json")
 
 
+@require_http_methods(["POST"])
+def cancel_group_join_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    if request.content_type != "application/json":
+        print(f"Invalid content type {request.content_type}")
+        return HttpResponseBadRequest()
+
+    content_json = JSONDecoder().decode(request.body.decode())
+    if type(content_json) is not dict:
+        print(f"Invalid json format: {type(content_json)}")
+        return HttpResponseBadRequest()
+
+    if "data" not in content_json:
+        print("standard json structure malformed")
+        return HttpResponseBadRequest()
+
+    data: dict = content_json["data"]
+
+    if "group_id" not in data:
+        return HttpResponseBadRequest()
+
+    status = cancel_join_request(
+        user_id=user_id,
+        group_id=data["group_id"]
+    )
+
+    if not status.success:
+        return HttpResponseForbidden(content=status.__str__().encode(), content_type="application/json")
+
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+
+@require_http_methods(["POST"])
+def approve_group_join_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    if request.content_type != "application/json":
+        print(f"Invalid content type {request.content_type}")
+        return HttpResponseBadRequest()
+
+    content_json = JSONDecoder().decode(request.body.decode())
+    if type(content_json) is not dict:
+        print(f"Invalid json format: {type(content_json)}")
+        return HttpResponseBadRequest()
+
+    if "data" not in content_json:
+        print("standard json structure malformed")
+        return HttpResponseBadRequest()
+
+    data: dict = content_json["data"]
+
+    if "group_id" not in data or "requester_id" not in data:
+        return HttpResponseBadRequest()
+
+    status = approve_join_request(
+        mod_id=user_id,
+        requester_id=data["requester_id"],
+        group_id=data["group_id"]
+    )
+
+    if not status.success:
+        return HttpResponseForbidden(content=status.__str__().encode(), content_type="application/json")
+
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+
+@require_http_methods(["POST"])
+def reject_group_join_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    if request.content_type != "application/json":
+        print(f"Invalid content type {request.content_type}")
+        return HttpResponseBadRequest()
+
+    content_json = JSONDecoder().decode(request.body.decode())
+    if type(content_json) is not dict:
+        print(f"Invalid json format: {type(content_json)}")
+        return HttpResponseBadRequest()
+
+    if "data" not in content_json:
+        print("standard json structure malformed")
+        return HttpResponseBadRequest()
+
+    data: dict = content_json["data"]
+
+    if "group_id" not in data or "requester_id" not in data:
+        return HttpResponseBadRequest()
+
+    status = reject_join_request(
+        mod_id=user_id,
+        requester_id=data["requester_id"],
+        group_id=data["group_id"]
+    )
+
+    if not status.success:
+        return HttpResponseForbidden(content=status.__str__().encode(), content_type="application/json")
+
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+
 @require_http_methods(["GET"])
 def get_user_join_requests_endpoint(request: HttpRequest):
     auth_token = None
@@ -155,6 +297,29 @@ def get_user_join_requests_endpoint(request: HttpRequest):
         return HttpResponseServerError()
 
     return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+
+@require_http_methods(["GET"])
+def owner_get_join_requests_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    status = mod_get_group_join_requests(user_id=user_id)
+
+    if not status.success:
+        return HttpResponseServerError()
+
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
 
 @require_http_methods(["GET"])
 def get_group_channels(request: HttpRequest, group_id=-1):
