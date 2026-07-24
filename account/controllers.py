@@ -1,9 +1,12 @@
+from pathlib import Path
 import os
 from base64 import b64encode, b64decode
 import datetime
 import secrets
 from cryptography.fernet import Fernet
 from hashlib import pbkdf2_hmac
+
+from django.conf import settings
 from account.models import AuthToken, User
 from util.checker import Checker
 
@@ -268,4 +271,45 @@ def update_user_details(data: dict, user_id: int):
         success=True,
         message="user updated",
         data=details
+    )
+
+
+def update_profile_picture(user_id: int, data, content_type):
+    user = User.users.get(id=user_id)
+
+    user.profile_picture = data
+    user.profile_picture_mime = content_type
+
+    user.save()
+
+    return Checker(
+        success=True,
+        message="successfully updated profile picture"
+    )
+
+
+def get_user_profile_picture(user_id: int):
+    user = User.users.get(id=user_id)
+    if user.profile_picture:
+        return Checker(
+            success=True,
+            message="fetched the profile picture",
+            data={
+                "data": user.profile_picture,
+                "content_type": user.profile_picture_mime
+            }
+        )
+
+    placeholder_path = Path(settings.BASE_DIR) / \
+        "static" / \
+        "images" / \
+        "profile_picture_placeholder.png"
+
+    return Checker(
+        success=True,
+        message="fetched the profile picture",
+        data={
+            "data": open(placeholder_path, "rb").read(),
+            "content_type": "image/png"
+        }
     )

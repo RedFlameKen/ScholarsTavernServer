@@ -11,6 +11,8 @@ class User(models.Model):
     salt = models.CharField(max_length=100)
     bio = models.CharField(max_length=1024, default="")
     date_created = models.DateTimeField(auto_now=True)
+    profile_picture = models.BinaryField(blank=True, null=True)
+    profile_picture_mime = models.CharField(max_length=50, null=True)
 
     users = Manager()
 
