@@ -1,10 +1,12 @@
-from http.client import FORBIDDEN, UNAUTHORIZED
+from http.client import FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from json import JSONDecoder
 import json
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from django.views.decorators.http import require_http_methods
+from django.core.files.uploadedfile import UploadedFile
+from typing import cast
 
-from account.controllers import auth_login_user, get_user_details, login_user, logout_user, register_user, update_user_details, validate_auth_token
+from account.controllers import auth_login_user, get_user_details, get_user_profile_picture, login_user, logout_user, register_user, update_profile_picture, update_user_details, validate_auth_token
 from account.models import User
 from util.checker import Checker
 
@@ -182,3 +184,44 @@ def update_user(request: HttpRequest):
     return HttpResponse(content=json.dumps(
         status.__dict__
     ).encode(), content_type="application/json")
+
+
+@require_http_methods(["POST"])
+def update_profile_picture_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    uploaded = cast(UploadedFile, request.FILES["profile_picture"])
+    image_data = uploaded.read()
+
+    status = update_profile_picture(user_id, image_data, uploaded.content_type)
+
+    return HttpResponse(content=status.__str__().encode(), content_type="application/json")
+
+
+@require_http_methods(["GET"])
+def get_profile_picture(_: HttpRequest, user_id=-1):
+    user_query = User.users.filter(id=user_id)
+    if user_query.count() <= 0:
+        print("user not found")
+        return HttpResponseNotFound(content=Checker(
+            success=False,
+            status=NOT_FOUND,
+            message="user not found"
+        ).__str__().encode(), content_type="application/json")
+
+    status = get_user_profile_picture(user_id)
+
+    return HttpResponse(
+        content=status.data["data"],
+        content_type=status.data["content_type"],
+    )
