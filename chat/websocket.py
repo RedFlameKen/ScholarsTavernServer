@@ -70,7 +70,7 @@ class ChatConsumer(WebsocketConsumer):
                 chat_data = data["chat"]
                 if chat_data["type"] == "text":
                     text = chat_data["text"]
-                    time_sent = datetime.now()
+                    time_sent = datetime.fromisoformat(chat_data["time_sent"].replace("Z", "+00:00"))
                     sender_id = chat_data["sender"]
                     chat_channel_id = chat_data["chat_channel_id"]
                     create_status = create_text_chat(
