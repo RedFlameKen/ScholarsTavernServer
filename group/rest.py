@@ -4,8 +4,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpR
 from django.http.response import HttpResponseServerError
 from django.views.decorators.http import require_http_methods
 
-from chat.controller import get_group_chat_channels
-from group.controllers import approve_join_request, cancel_join_request, create_group, create_join_request, get_user_groups, get_user_join_requests, mod_get_group_join_requests, reject_join_request, search_groups
+from group.controllers import approve_join_request, cancel_join_request, create_group, create_join_request, get_group_chat_channels, get_group_members, get_user_groups, get_user_join_requests, kick_group_member, mod_get_group_join_requests, reject_join_request, search_groups
 from account.controllers import validate_auth_token
 from group.models import Group
 from util.checker import Checker
@@ -300,6 +299,28 @@ def get_user_join_requests_endpoint(request: HttpRequest):
 
 
 @require_http_methods(["GET"])
+def get_group_members_endpoint(request: HttpRequest, group_id=-1):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    status = get_group_members(group_id)
+
+    return HttpResponse(
+        content=status.__str__().encode(),
+        content_type="application/json"
+    )
+
+
+@require_http_methods(["GET"])
 def owner_get_join_requests_endpoint(request: HttpRequest):
     auth_token = None
     user_id = -1
@@ -351,12 +372,53 @@ def get_group_channels(request: HttpRequest, group_id=-1):
     if not validation_status.success:
         return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
 
-    status = get_group_chat_channels(group_id=group_id)
+    status = get_group_chat_channels(group_id=group_id, user_id=user_id)
 
     return HttpResponse(
         status=status.status,
         content=status.__str__().encode(),
         content_type="application/json"
     )
+
+
+@require_http_methods(["POST"])
+def kick_group_member_endpoint(request: HttpRequest):
+    auth_token = None
+    user_id = -1
+    if "auth_token" in request.COOKIES:
+        auth_token = request.COOKIES["auth_token"]
+    if "user_id" in request.COOKIES:
+        user_id = request.COOKIES["user_id"]
+
+    validation_status = validate_auth_token(auth_token, user_id)
+
+    if not validation_status.success:
+        return HttpResponseForbidden(content=validation_status.__str__().encode(), content_type="application/json")
+
+    content_json = JSONDecoder().decode(request.body.decode())
+    if type(content_json) is not dict:
+        print(f"Invalid json format: {type(content_json)}")
+        return HttpResponseBadRequest()
+
+    if "data" not in content_json:
+        print("standard json structure malformed")
+        return HttpResponseBadRequest()
+
+    data: dict = content_json["data"]
+
+    if "group_id" not in data or "subject_id" not in data:
+        return HttpResponseBadRequest()
+
+    status = kick_group_member(
+        kicker_id=user_id,
+        subject_id=data["subject_id"],
+        group_id=data["group_id"]
+    )
+
+    return HttpResponse(
+        content=status.__str__().encode(),
+        content_type="application/json"
+    )
+
 
 # TODO: update group

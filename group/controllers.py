@@ -1,4 +1,6 @@
+from http.client import FORBIDDEN, UNAUTHORIZED
 from account.models import User
+from chat.models import ChatChannel, ChatChannelGroup, VoiceChannel
 from group.models import Group, GroupMember, GroupTag, JoinRequest, Tag
 from util.checker import Checker
 from chat.controller import generate_initial_chat_channels
@@ -420,4 +422,145 @@ def verify_group_member(user_id: int, group_id: int):
     return Checker(
         success=True,
         message="user is a member of the group"
+    )
+
+
+def get_group_members(group_id: int):
+    found_group = Group.groups.get(group_id)
+    if not found_group.is_public:
+        return Checker(
+            success=True,
+            message="group is private",
+            data={
+                "is_public": False,
+                "members": []
+            }
+        )
+    members = GroupMember.group_members.filter(group_id=found_group)
+
+    members_list = []
+    for member in members:
+        member_user: User = member.user_id
+        first_name = member_user.first_name
+        last_name = member_user.last_name
+        is_mod = member.is_moderator
+        members_list.append({
+            "id": member_user.pk,
+            "first_name": first_name,
+            "last_name": last_name,
+            "is_moderator": is_mod
+        })
+
+    return Checker(
+        success=True,
+        message="found members",
+        data={
+            "is_public": True,
+            "members": members_list
+        }
+    )
+
+
+def get_group_chat_channels(group_id: int, user_id: int):
+    found_group = Group.groups.filter(id=group_id)
+
+    if found_group.count() <= 0:
+        return Checker(
+            status=404,
+            message="group not found"
+        )
+
+    if not GroupMember.group_members.filter(group_id=group_id, user_id=user_id):
+        return Checker(
+            status=FORBIDDEN,
+            message="user is not a member of this group"
+        )
+
+    result = []
+    channel_groups = ChatChannelGroup.chat_channel_groups.filter(group_id=group_id)
+    for group in channel_groups:
+        channels = []
+        chat_channels = ChatChannel.chat_channels.filter(channel_group_id=group)
+        for chat_channel in chat_channels:
+            channels.append({
+                "id": int(chat_channel.pk),
+                "name": chat_channel.name,
+                "type": "chat",
+            })
+        voice_channels = VoiceChannel.voice_channels.filter(channel_group_id=group)
+        for voice_channel in voice_channels:
+            channels.append({
+                "id": int(voice_channel.pk),
+                "name": voice_channel.name,
+                "type": "voice",
+            })
+        group_dict = {
+            "id": int(group.pk),
+            "name": group.name,
+            "channels": channels
+        }
+        result.append(group_dict)
+
+    members = GroupMember.group_members.filter(group_id=group_id)
+
+    members_list = []
+    for member in members:
+        member_user: User = member.user_id
+        first_name = member_user.first_name
+        last_name = member_user.last_name
+        is_mod = member.is_moderator
+        members_list.append({
+            "id": member_user.pk,
+            "first_name": first_name,
+            "last_name": last_name,
+            "is_moderator": is_mod
+        })
+
+    return Checker(
+        status=200,
+        success=True,
+        message="fetched channels",
+        data={
+            "group_name": found_group[0].name,
+            "members": members_list,
+            "channel_groups": result
+        }
+    )
+
+
+def kick_group_member(kicker_id: int, subject_id: int, group_id: int):
+    found_group = Group.groups.filter(id=group_id)
+
+    if found_group.count() <= 0:
+        return Checker(
+            status=404,
+            message="group not found"
+        )
+
+    membership = GroupMember.group_members.filter(user_id=kicker_id)
+    if membership.count() <= 0:
+        return Checker(
+            status=FORBIDDEN,
+            message="user is not a member of the group"
+        )
+
+    if not membership[0].is_moderator:
+        return Checker(
+            status=UNAUTHORIZED,
+            message="User has no permission to kick"
+        )
+
+    subject_membership = GroupMember.group_members.filter(user_id=subject_id)
+    if subject_membership.count() <= 0:
+        return Checker(
+            status=FORBIDDEN,
+            message="user is not a member of the group"
+        )
+
+    subject_membership[0].delete()
+
+    return Checker(
+        success=True,
+        status=200,
+        message="user kicked"
     )

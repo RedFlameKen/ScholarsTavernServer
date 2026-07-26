@@ -104,51 +104,6 @@ def generate_initial_chat_channels(group_id: Group):
     )
 
 
-def get_group_chat_channels(group_id: int):
-    found_group = Group.groups.filter(id=group_id)
-
-    if found_group.count() <= 0:
-        return Checker(
-            status=404,
-            message="group not found"
-        )
-
-    result = []
-    channel_groups = ChatChannelGroup.chat_channel_groups.filter(group_id=group_id)
-    for group in channel_groups:
-        channels = []
-        chat_channels = ChatChannel.chat_channels.filter(channel_group_id=group)
-        for chat_channel in chat_channels:
-            channels.append({
-                "id": int(chat_channel.pk),
-                "name": chat_channel.name,
-                "type": "chat",
-            })
-        voice_channels = VoiceChannel.voice_channels.filter(channel_group_id=group)
-        for voice_channel in voice_channels:
-            channels.append({
-                "id": int(voice_channel.pk),
-                "name": voice_channel.name,
-                "type": "voice",
-            })
-        group_dict = {
-            "id": int(group.pk),
-            "name": group.name,
-            "channels": channels
-        }
-        result.append(group_dict)
-
-    return Checker(
-        status=200,
-        success=True,
-        message="fetched channels",
-        data={
-            "group_name": found_group[0].name,
-            "channel_groups": result
-        }
-    )
-
-
 def verify_chat_channel_user(user_id: int, chat_channel_id: int):
     found_channel = ChatChannel.chat_channels.filter(id=chat_channel_id)
     if found_channel.count() <= 0:

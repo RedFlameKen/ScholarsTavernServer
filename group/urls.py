@@ -1,6 +1,7 @@
 from django.urls import path
 
-from group.rest import approve_group_join_endpoint, cancel_group_join_endpoint, create_group_endpoint, get_group_channels, get_user_groups_endpoint, get_user_join_requests_endpoint, owner_get_join_requests_endpoint, reject_group_join_endpoint, request_group_join_endpoint, search_groups_endpoint
+from group.controllers import get_group_members
+from group.rest import approve_group_join_endpoint, cancel_group_join_endpoint, create_group_endpoint, get_group_channels, get_user_groups_endpoint, get_user_join_requests_endpoint, kick_group_member_endpoint, owner_get_join_requests_endpoint, reject_group_join_endpoint, request_group_join_endpoint, search_groups_endpoint
 
 urlpatterns = [
     path('group/', get_user_groups_endpoint),
@@ -13,4 +14,6 @@ urlpatterns = [
     path('group/pending', get_user_join_requests_endpoint),
     path('group/pending/cancel', cancel_group_join_endpoint),
     path('group/<int:group_id>', get_group_channels),
+    path('group/kick', kick_group_member_endpoint),
+    path('group/<int:group_id>/members', get_group_members),
 ]
