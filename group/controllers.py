@@ -470,11 +470,15 @@ def get_group_chat_channels(group_id: int, user_id: int):
             message="group not found"
         )
 
-    if not GroupMember.group_members.filter(group_id=group_id, user_id=user_id):
+    membership = GroupMember.group_members.filter(group_id=group_id, user_id=user_id)
+
+    if not membership:
         return Checker(
             status=FORBIDDEN,
             message="user is not a member of this group"
         )
+
+    user_is_moderator = membership[0].is_moderator
 
     result = []
     channel_groups = ChatChannelGroup.chat_channel_groups.filter(group_id=group_id)
@@ -523,7 +527,8 @@ def get_group_chat_channels(group_id: int, user_id: int):
         data={
             "group_name": found_group[0].name,
             "members": members_list,
-            "channel_groups": result
+            "channel_groups": result,
+            "is_moderator": user_is_moderator
         }
     )
 
