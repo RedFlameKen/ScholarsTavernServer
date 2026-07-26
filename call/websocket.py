@@ -1,3 +1,4 @@
+import logging
 from asgiref.sync import async_to_sync
 import json
 from channels.generic.websocket import WebsocketConsumer
@@ -62,6 +63,8 @@ class CallConsumer(WebsocketConsumer):
         }))
 
     def disconnect(self, code: int) -> None:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"DISCONNECT user={self.user_id} code={code}")
         room = rooms.get(self.room_group_name)
 
         if room:
@@ -86,7 +89,7 @@ class CallConsumer(WebsocketConsumer):
     def receive(self, text_data: str | None = None, bytes_data: bytes | None = None) -> None:
         if text_data is not None:
             data = json.loads(text_data)
-            print(f"received: {data}")
+            # print(f"received: {data}")
             print(f"rooms: {rooms}")
             room = rooms[self.room_group_name]
             to = data["to"]
@@ -113,7 +116,7 @@ class CallConsumer(WebsocketConsumer):
         if event["sender"] == self.channel_name:
             return
 
-        print(f"signaling message: {event}")
+        # print(f"signaling message: {event}")
 
         event["data"]["from"] = event["user_id"]
 
