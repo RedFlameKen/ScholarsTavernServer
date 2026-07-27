@@ -141,6 +141,8 @@ def create_group(group_data: dict, user_id: int):
     generation_status = generate_initial_chat_channels(group_id=group)
 
     print("generated")
+
+    generation_status.data["group_id"] = group.pk
     return generation_status
 
 
