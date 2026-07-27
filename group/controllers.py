@@ -544,7 +544,7 @@ def kick_group_member(kicker_id: int, subject_id: int, group_id: int):
             message="group not found"
         )
 
-    membership = GroupMember.group_members.filter(user_id=kicker_id)
+    membership = GroupMember.group_members.filter(user_id=kicker_id, group_id=group_id)
     if membership.count() <= 0:
         return Checker(
             status=FORBIDDEN,
@@ -557,7 +557,7 @@ def kick_group_member(kicker_id: int, subject_id: int, group_id: int):
             message="User has no permission to kick"
         )
 
-    subject_membership = GroupMember.group_members.filter(user_id=subject_id)
+    subject_membership = GroupMember.group_members.filter(user_id=subject_id, group_id=group_id)
     if subject_membership.count() <= 0:
         return Checker(
             status=FORBIDDEN,
