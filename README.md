@@ -55,6 +55,16 @@ the following command:
 ```bash
 pip install -r requirements.txt
 ```
+
+After the setup, it is recommended to add the domain of the React client to the
+`CORS_ALLOWED_ORIGINS` in `ScholarsTavernServer/settings.py`:
+```py
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "https://scholarstavern-ya5z.onrender.com",
+]
+```
 ---
 
 ## Running
