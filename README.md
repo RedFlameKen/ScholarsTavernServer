@@ -86,5 +86,5 @@ python manage.py runserver
 If running on a platform like "Render", the `runserver` command might need to
 be adjusted:
 ```bash
-python manage.py 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8000
 ```
